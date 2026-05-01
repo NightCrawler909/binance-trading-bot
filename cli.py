@@ -25,7 +25,8 @@ def place_order_cmd(
     quantity: float = typer.Option(..., "--quantity", help="Contract multiplier scaling order base logic quantity"),
     price: float = typer.Option(None, "--price", help="Strict limit price ceiling constraint (required actively for LIMIT and STOP routes)"),
     stop_price: float = typer.Option(None, "--stop-price", help="Threshold stop price constraint (required precisely for STOP variants)"),
-    env_file: Path = typer.Option(Path(".env"), "--env-file", help="Path representing relative `.env` API credential manifest")
+    env_file: Path = typer.Option(Path(".env"), "--env-file", help="Path representing relative `.env` API credential manifest"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Simulate execution defensively without authenticating against the REST nodes")
 ):
     """
     Validate, assemble, and inject precisely built orders against the live Binance test network environments.
@@ -74,6 +75,11 @@ def place_order_cmd(
     # 5. Render outbound dictionary mappings correctly translating constraints exactly to protocol bindings mapping requirements.
     params = build_order_params(**validated)
     
+    if dry_run:
+        console.print("[bold yellow]⚠️ DRY RUN MODE ENGAGED:[/bold yellow] Request parameters verified successfully but API execution simulated securely.")
+        logger.info("Execution aborted explicitly via --dry-run modifier.")
+        raise typer.Exit(code=0)
+
     # 6. Execute network transfer route safely trapping network variations catching standard failure footprints locally resolving node errors.
     try:
         response = place_order(client, params)
